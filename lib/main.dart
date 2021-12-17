@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:service_review/review_screen.dart';
-import 'package:service_review/size_provider.dart';
 
 main() {
   runApp(const ServiceReview());

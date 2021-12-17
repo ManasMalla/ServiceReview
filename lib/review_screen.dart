@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:provider/provider.dart';
+import 'package:service_review/model/service_viewmodel.dart';
 import 'package:service_review/rating_button.dart';
 import 'package:service_review/rating_chip.dart';
 import 'package:service_review/rating_star.dart';
@@ -52,7 +54,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
             height: getProportionateHeight(16),
           ),
           hasUserGivenFeedBack
-              ? SizedBox()
+              ? const SizedBox()
               : Text(
                   "Your feedback helps us improve our service and help us serve you better.",
                   style: Theme.of(context)
@@ -66,7 +68,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
             child: const Image(image: AssetImage("assets/feedback.png")),
           ),
           const Spacer(),
-          Container(
+          SizedBox(
             width: double.infinity,
             child: ClipRRect(
               borderRadius: BorderRadius.circular(getProportionateSize(16)),
@@ -90,15 +92,22 @@ class _ReviewScreenState extends State<ReviewScreen> {
                         showModalBottomSheet(
                             context: context,
                             shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                    getProportionateSize(24))),
+                              borderRadius: BorderRadius.vertical(
+                                top: Radius.circular(
+                                  getProportionateSize(24),
+                                ),
+                              ),
+                            ),
                             builder: (context) {
-                              return RatingCard(
-                                onFeedbackSubmitted: () {
-                                  setState(() {
-                                    hasUserGivenFeedBack = true;
-                                  });
-                                },
+                              return ChangeNotifierProvider<ServiceViewModel>(
+                                create: (context) => ServiceViewModel(),
+                                child: RatingCard(
+                                  onFeedbackSubmitted: () {
+                                    setState(() {
+                                      hasUserGivenFeedBack = true;
+                                    });
+                                  },
+                                ),
                               );
                             });
                       },
@@ -145,9 +154,6 @@ class RatingCard extends StatefulWidget {
 
 class _RatingCardState extends State<RatingCard> {
   var starsGiven = 0;
-  String feedbackText = "";
-  var chipStates = [false, false, false, false, false];
-  bool needToSendOnBackSpaceChanged = true;
 
   @override
   Widget build(BuildContext context) {
@@ -186,42 +192,27 @@ class _RatingCardState extends State<RatingCard> {
                   });
                 },
               ),
-              RatingTextField(
-                initialText: feedbackText,
-                onChanged: (feedback) {
-                  feedbackText = feedback;
-                },
-                onSubmitted: (feedback) {
-                  setState(() {
-                    feedbackText = feedback;
-                  });
-                },
-                onBackspacePressed: () {
-                  setState(() {
-                    resetChips(-1, chipStates);
-                    needToSendOnBackSpaceChanged = false;
-                  });
-                },
-                needToSendOnBackSpaceChanged: needToSendOnBackSpaceChanged,
-              ),
+              const RatingTextField(),
               SizedBox(
                 height: getProportionateHeight(8),
               ),
-              RatingChips(
-                starsGiven: starsGiven == 0 ? 5 : starsGiven,
-                chipStates: chipStates,
-                onChipSelected: (feedback, index) {
-                  setState(() {
-                    needToSendOnBackSpaceChanged = true;
-                    feedbackText = feedback;
-                  });
-                },
-              ),
+              Consumer<ServiceViewModel>(builder: (context, model, _) {
+                return RatingChips(
+                  starsGiven: starsGiven == 0 ? 5 : starsGiven,
+                  onChipSelected: (feedback, index) {
+                    model.setFeedback(feedback);
+                    model.changeListState(index);
+                  },
+                );
+              }),
               SizedBox(
                 height: getProportionateHeight(16),
               ),
               RatingButton(
                 onPressed: () {
+                  var feedbackText =
+                      Provider.of<ServiceViewModel>(context, listen: false)
+                          .feedback;
                   if (feedbackText.isNotEmpty && starsGiven > 0) {
                     print("Submit Data - $feedbackText with $starsGiven");
                     Navigator.pop(context);

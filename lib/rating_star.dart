@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:service_review/chip_data.dart';
+import 'package:service_review/model/service_viewmodel.dart';
 import 'package:service_review/size_provider.dart';
 
 class RatingStar extends StatefulWidget {
@@ -36,19 +38,23 @@ class _RatingStarState extends State<RatingStar> {
                   ?.withOpacity(widget.state ? 0.6 : 0),
             ),
           ),
-          IconButton(
-            onPressed: () {
-              widget.onPressed();
-            },
-            splashColor: emojiColor[widget.index + 1]?.withOpacity(0.2),
-            hoverColor: emojiColor[widget.index + 1]?.withOpacity(0.15),
-            iconSize: getProportionateSize(48),
-            splashRadius: getProportionateSize(20),
-            icon: Icon(
-              emojis[widget.index + 1],
-              color: emojiColor[widget.index + 1],
-            ),
-          ),
+          Consumer<ServiceViewModel>(builder: (context, model, _) {
+            return IconButton(
+              onPressed: () {
+                widget.onPressed();
+                model.changeListState(-1);
+                model.setFeedback("");
+              },
+              splashColor: emojiColor[widget.index + 1]?.withOpacity(0.2),
+              hoverColor: emojiColor[widget.index + 1]?.withOpacity(0.15),
+              iconSize: getProportionateSize(48),
+              splashRadius: getProportionateSize(20),
+              icon: Icon(
+                emojis[widget.index + 1],
+                color: emojiColor[widget.index + 1],
+              ),
+            );
+          }),
         ],
       ),
     );

@@ -1,22 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'package:service_review/model/service_viewmodel.dart';
 import 'package:service_review/size_provider.dart';
 
 class RatingTextField extends StatelessWidget {
-  final String? initialText;
-  final Function(String) onChanged;
-  final Function onBackspacePressed;
-
-  final Function(String) onSubmitted;
-
-  final bool needToSendOnBackSpaceChanged;
   const RatingTextField({
     Key? key,
-    this.initialText,
-    required this.onChanged,
-    required this.onSubmitted,
-    required this.onBackspacePressed,
-    required this.needToSendOnBackSpaceChanged,
   }) : super(key: key);
 
   @override
@@ -29,13 +19,22 @@ class RatingTextField extends StatelessWidget {
       height: getProportionateHeight(120),
       padding: EdgeInsets.symmetric(horizontal: getProportionateWidth(16)),
       margin: EdgeInsets.symmetric(vertical: getProportionateHeight(8)),
-      child: RatingInputTextField(
-        initialText: initialText ?? "",
-        onChanged: onChanged,
-        onSubmitted: onSubmitted,
-        onBackspacePressed: onBackspacePressed,
-        needToSendOnBackSpaceChanged: needToSendOnBackSpaceChanged,
-      ),
+      child: Consumer<ServiceViewModel>(builder: (context, model, _) {
+        return RatingInputTextField(
+          initialText: model.feedback,
+          onChanged: (feedback) {
+            //model.setFeedback(feedback);
+          },
+          onSubmitted: (feedback) {
+            model.setFeedback(feedback);
+          },
+          onBackspacePressed: () {
+            if (model.canChangeFeedback) {
+              model.changeListState(-1);
+            }
+          },
+        );
+      }),
     );
   }
 }
@@ -45,14 +44,12 @@ class RatingInputTextField extends StatefulWidget {
   final Function(String) onChanged;
   final Function(String) onSubmitted;
   final Function onBackspacePressed;
-  final bool needToSendOnBackSpaceChanged;
   const RatingInputTextField({
     Key? key,
     required this.initialText,
     required this.onChanged,
     required this.onSubmitted,
     required this.onBackspacePressed,
-    required this.needToSendOnBackSpaceChanged,
   }) : super(key: key);
 
   @override
@@ -67,9 +64,7 @@ class _RatingInputTextFieldState extends State<RatingInputTextField> {
         focusNode: FocusNode(),
         onKey: (event) {
           if (event.logicalKey == LogicalKeyboardKey.backspace) {
-            if (widget.needToSendOnBackSpaceChanged) {
-              widget.onBackspacePressed();
-            }
+            widget.onBackspacePressed();
           }
         },
         child: TextFormField(
